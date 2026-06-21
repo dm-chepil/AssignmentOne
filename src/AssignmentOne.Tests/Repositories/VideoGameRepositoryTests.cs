@@ -74,6 +74,57 @@ public class VideoGameRepositoryTests : IDisposable
     }
 
     [Fact]
+    public async Task GetPagedAsync_WhenDatabaseIsEmpty_ReturnsEmptyPagedResult()
+    {
+        var result = await _sut.GetPagedAsync(1, 5);
+
+        Assert.Empty(result.Items);
+        Assert.Equal(0, result.TotalCount);
+    }
+
+    [Fact]
+    public async Task GetPagedAsync_ReturnsCorrectPageOfItems()
+    {
+        var games = Enumerable.Range(1, 10).Select(i => new VideoGame
+        {
+            Id = Guid.NewGuid(),
+            Name = $"Game {i}",
+            Description = $"Desc {i}",
+            CreateDate = new DateTime(2024, 1, i, 0, 0, 0, DateTimeKind.Utc)
+        }).ToList();
+
+        _context.VideoGames.AddRange(games);
+        await _context.SaveChangesAsync();
+
+        var result = await _sut.GetPagedAsync(page: 2, pageSize: 3);
+
+        Assert.Equal(3, result.Items.Count());
+        Assert.Equal(10, result.TotalCount);
+        Assert.Equal(2, result.Page);
+        Assert.Equal(3, result.PageSize);
+    }
+
+    [Fact]
+    public async Task GetPagedAsync_ReturnsTotalCountForAllRecords()
+    {
+        var games = Enumerable.Range(1, 7).Select(i => new VideoGame
+        {
+            Id = Guid.NewGuid(),
+            Name = $"Game {i}",
+            Description = $"Desc {i}",
+            CreateDate = DateTime.UtcNow
+        }).ToList();
+
+        _context.VideoGames.AddRange(games);
+        await _context.SaveChangesAsync();
+
+        var result = await _sut.GetPagedAsync(page: 1, pageSize: 5);
+
+        Assert.Equal(7, result.TotalCount);
+        Assert.Equal(5, result.Items.Count());
+    }
+
+    [Fact]
     public async Task GetByIdAsync_WhenGameExists_ReturnsVideoGame()
     {
         var id = Guid.NewGuid();

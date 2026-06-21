@@ -1,5 +1,6 @@
 using AssignmentOne.Core.Entities;
 using AssignmentOne.Core.Interfaces;
+using AssignmentOne.Core.Models;
 
 namespace AssignmentOne.Core.Services;
 
@@ -15,6 +16,11 @@ public class VideoGameService : IVideoGameService
     public Task<IEnumerable<VideoGame>> GetAllAsync()
     {
         return _repository.GetAllAsync();
+    }
+
+    public Task<PagedResult<VideoGame>> GetPagedAsync(int page, int pageSize)
+    {
+        return _repository.GetPagedAsync(page, pageSize);
     }
 
     public Task<VideoGame?> GetByIdAsync(Guid id)

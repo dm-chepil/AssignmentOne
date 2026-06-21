@@ -1,5 +1,6 @@
 using AssignmentOne.Api.DTOs;
 using AssignmentOne.Core.Interfaces;
+using AssignmentOne.Core.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AssignmentOne.Api.Controllers;
@@ -8,6 +9,8 @@ namespace AssignmentOne.Api.Controllers;
 [Route("api/video-games")]
 public class VideoGamesController : ControllerBase
 {
+    private const int DefaultPageSize = 5;
+
     private readonly IVideoGameService _videoGameService;
 
     public VideoGamesController(IVideoGameService videoGameService)
@@ -16,17 +19,25 @@ public class VideoGamesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<VideoGameDto>>> GetAll()
+    public async Task<ActionResult<PagedResult<VideoGameDto>>> GetAll(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = DefaultPageSize)
     {
-        var videoGames = await _videoGameService.GetAllAsync();
+        var pagedGames = await _videoGameService.GetPagedAsync(page, pageSize);
 
-        var result = videoGames.Select(vg => new VideoGameDto
+        var result = new PagedResult<VideoGameDto>
         {
-            Id = vg.Id,
-            Name = vg.Name,
-            Description = vg.Description,
-            CreateDate = vg.CreateDate
-        });
+            Items = pagedGames.Items.Select(vg => new VideoGameDto
+            {
+                Id = vg.Id,
+                Name = vg.Name,
+                Description = vg.Description,
+                CreateDate = vg.CreateDate
+            }),
+            TotalCount = pagedGames.TotalCount,
+            Page = pagedGames.Page,
+            PageSize = pagedGames.PageSize
+        };
 
         return Ok(result);
     }

@@ -2,6 +2,7 @@ using AssignmentOne.Api.Controllers;
 using AssignmentOne.Api.DTOs;
 using AssignmentOne.Core.Entities;
 using AssignmentOne.Core.Interfaces;
+using AssignmentOne.Core.Models;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 
@@ -22,8 +23,8 @@ public class VideoGamesControllerTests
     public async Task GetAll_ReturnsOkResult()
     {
         _serviceMock
-            .Setup(s => s.GetAllAsync())
-            .ReturnsAsync(Enumerable.Empty<VideoGame>());
+            .Setup(s => s.GetPagedAsync(It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(new PagedResult<VideoGame>());
 
         var result = await _sut.GetAll();
 
@@ -31,7 +32,7 @@ public class VideoGamesControllerTests
     }
 
     [Fact]
-    public async Task GetAll_ReturnsAllVideoGamesAsDtos()
+    public async Task GetAll_ReturnsPagedResultWithCorrectItems()
     {
         var games = new List<VideoGame>
         {
@@ -40,14 +41,15 @@ public class VideoGamesControllerTests
         };
 
         _serviceMock
-            .Setup(s => s.GetAllAsync())
-            .ReturnsAsync(games);
+            .Setup(s => s.GetPagedAsync(It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(new PagedResult<VideoGame> { Items = games, TotalCount = 2, Page = 1, PageSize = 5 });
 
         var result = await _sut.GetAll();
 
         var ok = Assert.IsType<OkObjectResult>(result.Result);
-        var dtos = Assert.IsAssignableFrom<IEnumerable<VideoGameDto>>(ok.Value);
-        Assert.Equal(2, dtos.Count());
+        var paged = Assert.IsType<PagedResult<VideoGameDto>>(ok.Value);
+        Assert.Equal(2, paged.Items.Count());
+        Assert.Equal(2, paged.TotalCount);
     }
 
     [Fact]
@@ -57,16 +59,23 @@ public class VideoGamesControllerTests
         var createDate = DateTime.UtcNow;
 
         _serviceMock
-            .Setup(s => s.GetAllAsync())
-            .ReturnsAsync(new List<VideoGame>
+            .Setup(s => s.GetPagedAsync(It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(new PagedResult<VideoGame>
             {
-                new() { Id = id, Name = "Test Game", Description = "Test Desc", CreateDate = createDate }
+                Items = new List<VideoGame>
+                {
+                    new() { Id = id, Name = "Test Game", Description = "Test Desc", CreateDate = createDate }
+                },
+                TotalCount = 1,
+                Page = 1,
+                PageSize = 5
             });
 
         var result = await _sut.GetAll();
 
         var ok = Assert.IsType<OkObjectResult>(result.Result);
-        var dto = Assert.IsAssignableFrom<IEnumerable<VideoGameDto>>(ok.Value).Single();
+        var paged = Assert.IsType<PagedResult<VideoGameDto>>(ok.Value);
+        var dto = paged.Items.Single();
 
         Assert.Equal(id, dto.Id);
         Assert.Equal("Test Game", dto.Name);
@@ -75,29 +84,43 @@ public class VideoGamesControllerTests
     }
 
     [Fact]
-    public async Task GetAll_WhenNoGamesExist_ReturnsEmptyCollection()
+    public async Task GetAll_WhenNoGamesExist_ReturnsEmptyItems()
     {
         _serviceMock
-            .Setup(s => s.GetAllAsync())
-            .ReturnsAsync(Enumerable.Empty<VideoGame>());
+            .Setup(s => s.GetPagedAsync(It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(new PagedResult<VideoGame> { TotalCount = 0, Page = 1, PageSize = 5 });
 
         var result = await _sut.GetAll();
 
         var ok = Assert.IsType<OkObjectResult>(result.Result);
-        var dtos = Assert.IsAssignableFrom<IEnumerable<VideoGameDto>>(ok.Value);
-        Assert.Empty(dtos);
+        var paged = Assert.IsType<PagedResult<VideoGameDto>>(ok.Value);
+        Assert.Empty(paged.Items);
     }
 
     [Fact]
-    public async Task GetAll_CallsServiceOnce()
+    public async Task GetAll_UsesDefaultPageAndPageSize_WhenNotProvided()
     {
         _serviceMock
-            .Setup(s => s.GetAllAsync())
-            .ReturnsAsync(Enumerable.Empty<VideoGame>());
+            .Setup(s => s.GetPagedAsync(1, 5))
+            .ReturnsAsync(new PagedResult<VideoGame>())
+            .Verifiable();
 
         await _sut.GetAll();
 
-        _serviceMock.Verify(s => s.GetAllAsync(), Times.Once);
+        _serviceMock.Verify(s => s.GetPagedAsync(1, 5), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetAll_PassesPageAndPageSizeToService()
+    {
+        _serviceMock
+            .Setup(s => s.GetPagedAsync(3, 10))
+            .ReturnsAsync(new PagedResult<VideoGame>())
+            .Verifiable();
+
+        await _sut.GetAll(page: 3, pageSize: 10);
+
+        _serviceMock.Verify(s => s.GetPagedAsync(3, 10), Times.Once);
     }
 
     [Fact]

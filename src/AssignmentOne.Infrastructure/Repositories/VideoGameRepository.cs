@@ -1,5 +1,6 @@
 using AssignmentOne.Core.Entities;
 using AssignmentOne.Core.Interfaces;
+using AssignmentOne.Core.Models;
 using AssignmentOne.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,6 +18,25 @@ public class VideoGameRepository : IVideoGameRepository
     public async Task<IEnumerable<VideoGame>> GetAllAsync()
     {
         return await _context.VideoGames.ToListAsync();
+    }
+
+    public async Task<PagedResult<VideoGame>> GetPagedAsync(int page, int pageSize)
+    {
+        var totalCount = await _context.VideoGames.CountAsync();
+
+        var items = await _context.VideoGames
+            .OrderBy(vg => vg.CreateDate)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PagedResult<VideoGame>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
     }
 
     public async Task<VideoGame?> GetByIdAsync(Guid id)

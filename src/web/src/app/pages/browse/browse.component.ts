@@ -13,35 +13,35 @@ import { VideoGameService } from '../../services/video-game.service';
 })
 export class BrowseComponent implements OnInit {
   games: VideoGame[] = [];
-  pagedGames: VideoGame[] = [];
+  totalCount = 0;
   currentPage = 1;
-  readonly pageSize = 10;
+  readonly pageSize = 5;
   loading = true;
   error = false;
 
   constructor(private videoGameService: VideoGameService) {}
 
   ngOnInit(): void {
-    this.videoGameService.getAll().subscribe({
-      next: (games) => {
-        this.games = games;
+    this.loadPage();
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.loadPage();
+  }
+
+  private loadPage(): void {
+    this.loading = true;
+    this.videoGameService.getPage(this.currentPage, this.pageSize).subscribe({
+      next: (result) => {
+        this.games = result.items;
+        this.totalCount = result.totalCount;
         this.loading = false;
-        this.updatePage();
       },
       error: () => {
         this.error = true;
         this.loading = false;
       }
     });
-  }
-
-  onPageChange(page: number): void {
-    this.currentPage = page;
-    this.updatePage();
-  }
-
-  private updatePage(): void {
-    const start = (this.currentPage - 1) * this.pageSize;
-    this.pagedGames = this.games.slice(start, start + this.pageSize);
   }
 }
