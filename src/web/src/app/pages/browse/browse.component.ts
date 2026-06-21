@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
 import { VideoGame } from '../../models/video-game';
 import { VideoGameService } from '../../services/video-game.service';
@@ -7,7 +8,7 @@ import { VideoGameService } from '../../services/video-game.service';
 @Component({
   selector: 'app-browse',
   standalone: true,
-  imports: [CommonModule, NgbPaginationModule],
+  imports: [CommonModule, RouterModule, NgbPaginationModule],
   templateUrl: './browse.component.html'
 })
 export class BrowseComponent implements OnInit {

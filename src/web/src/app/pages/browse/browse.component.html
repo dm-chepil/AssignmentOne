@@ -29,6 +29,9 @@
               <dd class="col-sm-9">{{ game.createDate | date:'medium' }}</dd>
             </dl>
           </div>
+          <div class="card-footer d-flex justify-content-end">
+            <a [routerLink]="['/video-games', game.id, 'edit']" class="btn btn-sm btn-outline-primary">Edit</a>
+          </div>
         </div>
       </div>
     </div>
