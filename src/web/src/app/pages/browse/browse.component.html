@@ -1,0 +1,48 @@
+<div class="container">
+  <h1 class="mb-4">Browse Video Games</h1>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger">
+    Failed to load video games. Please try again later.
+  </div>
+
+  <ng-container *ngIf="!loading && !error">
+    <div *ngIf="games.length === 0" class="alert alert-info">
+      No video games found.
+    </div>
+
+    <div class="row row-cols-1 g-3 mb-4" *ngIf="games.length > 0">
+      <div class="col" *ngFor="let game of pagedGames">
+        <div class="card h-100">
+          <div class="card-body">
+            <h5 class="card-title">{{ game.name }}</h5>
+            <p class="card-text text-muted">{{ game.description }}</p>
+            <dl class="row mb-0 small">
+              <dt class="col-sm-3">ID</dt>
+              <dd class="col-sm-9 font-monospace">{{ game.id }}</dd>
+              <dt class="col-sm-3">Created</dt>
+              <dd class="col-sm-9">{{ game.createDate | date:'medium' }}</dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-center" *ngIf="games.length > pageSize">
+      <ngb-pagination
+        [collectionSize]="games.length"
+        [(page)]="currentPage"
+        [pageSize]="pageSize"
+        [maxSize]="5"
+        [rotate]="true"
+        [boundaryLinks]="true"
+        (pageChange)="onPageChange($event)"
+      />
+    </div>
+  </ng-container>
+</div>
