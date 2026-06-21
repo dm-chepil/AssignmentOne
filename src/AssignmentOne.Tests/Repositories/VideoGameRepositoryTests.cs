@@ -72,4 +72,90 @@ public class VideoGameRepositoryTests : IDisposable
         Assert.Equal("Test Description", result.Description);
         Assert.Equal(createDate, result.CreateDate);
     }
+
+    [Fact]
+    public async Task GetByIdAsync_WhenGameExists_ReturnsVideoGame()
+    {
+        var id = Guid.NewGuid();
+        _context.VideoGames.Add(new VideoGame { Id = id, Name = "Game A", Description = "Desc A", CreateDate = DateTime.UtcNow });
+        await _context.SaveChangesAsync();
+
+        var result = await _sut.GetByIdAsync(id);
+
+        Assert.NotNull(result);
+        Assert.Equal(id, result.Id);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_WhenGameExists_ReturnsCorrectFields()
+    {
+        var id = Guid.NewGuid();
+        var createDate = DateTime.UtcNow;
+        _context.VideoGames.Add(new VideoGame { Id = id, Name = "Game A", Description = "Desc A", CreateDate = createDate });
+        await _context.SaveChangesAsync();
+
+        var result = await _sut.GetByIdAsync(id);
+
+        Assert.Equal("Game A", result!.Name);
+        Assert.Equal("Desc A", result.Description);
+        Assert.Equal(createDate, result.CreateDate);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_WhenGameDoesNotExist_ReturnsNull()
+    {
+        var result = await _sut.GetByIdAsync(Guid.NewGuid());
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenGameExists_ReturnsUpdatedVideoGame()
+    {
+        var id = Guid.NewGuid();
+        _context.VideoGames.Add(new VideoGame { Id = id, Name = "Original", Description = "Original Desc", CreateDate = DateTime.UtcNow });
+        await _context.SaveChangesAsync();
+
+        var updated = new VideoGame { Id = id, Name = "Updated", Description = "Updated Desc" };
+        var result = await _sut.UpdateAsync(updated);
+
+        Assert.NotNull(result);
+        Assert.Equal("Updated", result.Name);
+        Assert.Equal("Updated Desc", result.Description);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenGameExists_PersistsChangesToDatabase()
+    {
+        var id = Guid.NewGuid();
+        _context.VideoGames.Add(new VideoGame { Id = id, Name = "Original", Description = "Original Desc", CreateDate = DateTime.UtcNow });
+        await _context.SaveChangesAsync();
+
+        await _sut.UpdateAsync(new VideoGame { Id = id, Name = "Updated", Description = "Updated Desc" });
+
+        var persisted = await _context.VideoGames.FindAsync(id);
+        Assert.Equal("Updated", persisted!.Name);
+        Assert.Equal("Updated Desc", persisted.Description);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenGameExists_DoesNotOverwriteCreateDate()
+    {
+        var id = Guid.NewGuid();
+        var originalDate = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        _context.VideoGames.Add(new VideoGame { Id = id, Name = "Original", Description = "Desc", CreateDate = originalDate });
+        await _context.SaveChangesAsync();
+
+        var result = await _sut.UpdateAsync(new VideoGame { Id = id, Name = "Updated", Description = "Updated Desc" });
+
+        Assert.Equal(originalDate, result!.CreateDate);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenGameDoesNotExist_ReturnsNull()
+    {
+        var result = await _sut.UpdateAsync(new VideoGame { Id = Guid.NewGuid(), Name = "X", Description = "Y" });
+
+        Assert.Null(result);
+    }
 }

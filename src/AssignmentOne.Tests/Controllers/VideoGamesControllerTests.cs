@@ -99,4 +99,122 @@ public class VideoGamesControllerTests
 
         _serviceMock.Verify(s => s.GetAllAsync(), Times.Once);
     }
+
+    [Fact]
+    public async Task GetById_WhenGameExists_ReturnsOkResult()
+    {
+        var id = Guid.NewGuid();
+        _serviceMock
+            .Setup(s => s.GetByIdAsync(id))
+            .ReturnsAsync(new VideoGame { Id = id, Name = "Game A", Description = "Desc A", CreateDate = DateTime.UtcNow });
+
+        var result = await _sut.GetById(id);
+
+        Assert.IsType<OkObjectResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task GetById_WhenGameExists_MapsDtoFieldsCorrectly()
+    {
+        var id = Guid.NewGuid();
+        var createDate = DateTime.UtcNow;
+        _serviceMock
+            .Setup(s => s.GetByIdAsync(id))
+            .ReturnsAsync(new VideoGame { Id = id, Name = "Game A", Description = "Desc A", CreateDate = createDate });
+
+        var result = await _sut.GetById(id);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var dto = Assert.IsType<VideoGameDto>(ok.Value);
+        Assert.Equal(id, dto.Id);
+        Assert.Equal("Game A", dto.Name);
+        Assert.Equal("Desc A", dto.Description);
+        Assert.Equal(createDate, dto.CreateDate);
+    }
+
+    [Fact]
+    public async Task GetById_WhenGameDoesNotExist_ReturnsNotFound()
+    {
+        _serviceMock
+            .Setup(s => s.GetByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync((VideoGame?)null);
+
+        var result = await _sut.GetById(Guid.NewGuid());
+
+        Assert.IsType<NotFoundResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task GetById_CallsServiceWithCorrectId()
+    {
+        var id = Guid.NewGuid();
+        _serviceMock
+            .Setup(s => s.GetByIdAsync(id))
+            .ReturnsAsync(new VideoGame { Id = id });
+
+        await _sut.GetById(id);
+
+        _serviceMock.Verify(s => s.GetByIdAsync(id), Times.Once);
+    }
+
+    [Fact]
+    public async Task Update_WhenGameExists_ReturnsOkResult()
+    {
+        var id = Guid.NewGuid();
+        var dto = new UpdateVideoGameDto { Name = "Updated", Description = "Updated Desc" };
+        _serviceMock
+            .Setup(s => s.UpdateAsync(id, dto.Name, dto.Description))
+            .ReturnsAsync(new VideoGame { Id = id, Name = dto.Name, Description = dto.Description, CreateDate = DateTime.UtcNow });
+
+        var result = await _sut.Update(id, dto);
+
+        Assert.IsType<OkObjectResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task Update_WhenGameExists_ReturnsUpdatedDto()
+    {
+        var id = Guid.NewGuid();
+        var createDate = DateTime.UtcNow;
+        var dto = new UpdateVideoGameDto { Name = "Updated", Description = "Updated Desc" };
+        _serviceMock
+            .Setup(s => s.UpdateAsync(id, dto.Name, dto.Description))
+            .ReturnsAsync(new VideoGame { Id = id, Name = dto.Name, Description = dto.Description, CreateDate = createDate });
+
+        var result = await _sut.Update(id, dto);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var returned = Assert.IsType<VideoGameDto>(ok.Value);
+        Assert.Equal(id, returned.Id);
+        Assert.Equal("Updated", returned.Name);
+        Assert.Equal("Updated Desc", returned.Description);
+        Assert.Equal(createDate, returned.CreateDate);
+    }
+
+    [Fact]
+    public async Task Update_WhenGameDoesNotExist_ReturnsNotFound()
+    {
+        var dto = new UpdateVideoGameDto { Name = "Updated", Description = "Updated Desc" };
+        _serviceMock
+            .Setup(s => s.UpdateAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync((VideoGame?)null);
+
+        var result = await _sut.Update(Guid.NewGuid(), dto);
+
+        Assert.IsType<NotFoundResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task Update_CallsServiceWithCorrectArguments()
+    {
+        var id = Guid.NewGuid();
+        var dto = new UpdateVideoGameDto { Name = "Updated", Description = "Updated Desc" };
+        _serviceMock
+            .Setup(s => s.UpdateAsync(id, dto.Name, dto.Description))
+            .ReturnsAsync(new VideoGame { Id = id, Name = dto.Name, Description = dto.Description });
+
+        await _sut.Update(id, dto);
+
+        _serviceMock.Verify(s => s.UpdateAsync(id, dto.Name, dto.Description), Times.Once);
+    }
 }

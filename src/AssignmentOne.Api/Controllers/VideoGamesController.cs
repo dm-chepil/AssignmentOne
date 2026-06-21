@@ -30,4 +30,42 @@ public class VideoGamesController : ControllerBase
 
         return Ok(result);
     }
+
+    [HttpGet("{gameId:guid}")]
+    public async Task<ActionResult<VideoGameDto>> GetById(Guid gameId)
+    {
+        var videoGame = await _videoGameService.GetByIdAsync(gameId);
+
+        if (videoGame is null)
+            return NotFound();
+
+        var result = new VideoGameDto
+        {
+            Id = videoGame.Id,
+            Name = videoGame.Name,
+            Description = videoGame.Description,
+            CreateDate = videoGame.CreateDate
+        };
+
+        return Ok(result);
+    }
+
+    [HttpPut("{gameId:guid}")]
+    public async Task<ActionResult<VideoGameDto>> Update(Guid gameId, UpdateVideoGameDto dto)
+    {
+        var updated = await _videoGameService.UpdateAsync(gameId, dto.Name, dto.Description);
+
+        if (updated is null)
+            return NotFound();
+
+        var result = new VideoGameDto
+        {
+            Id = updated.Id,
+            Name = updated.Name,
+            Description = updated.Description,
+            CreateDate = updated.CreateDate
+        };
+
+        return Ok(result);
+    }
 }

@@ -16,4 +16,21 @@ public class VideoGameService : IVideoGameService
     {
         return _repository.GetAllAsync();
     }
+
+    public Task<VideoGame?> GetByIdAsync(Guid id)
+    {
+        return _repository.GetByIdAsync(id);
+    }
+
+    public Task<VideoGame?> UpdateAsync(Guid id, string name, string description)
+    {
+        var videoGame = new VideoGame
+        {
+            Id = id,
+            Name = name,
+            Description = description
+        };
+
+        return _repository.UpdateAsync(videoGame);
+    }
 }

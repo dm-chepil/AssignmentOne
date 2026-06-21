@@ -18,4 +18,22 @@ public class VideoGameRepository : IVideoGameRepository
     {
         return await _context.VideoGames.ToListAsync();
     }
+
+    public async Task<VideoGame?> GetByIdAsync(Guid id)
+    {
+        return await _context.VideoGames.FindAsync(id);
+    }
+
+    public async Task<VideoGame?> UpdateAsync(VideoGame videoGame)
+    {
+        var existing = await _context.VideoGames.FindAsync(videoGame.Id);
+        if (existing is null)
+            return null;
+
+        existing.Name = videoGame.Name;
+        existing.Description = videoGame.Description;
+
+        await _context.SaveChangesAsync();
+        return existing;
+    }
 }
